@@ -301,7 +301,7 @@ int main(int argc, char *argv[])
 {
     const char * src_filename = "rtmp://live.hkstv.hk.lxdns.com/live/hks";
     //const char * src_filename = "test.flv";
-    const char * dst_filename = "rtmp://localhost/publishlive/livestream"; */
+    const char * dst_filename = "rtmp://localhost/publishlive/livestream";
     //const char * dst_filename = "demo.flv";
 
     int frame_count = 0;
