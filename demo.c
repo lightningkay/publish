@@ -31,7 +31,30 @@ static void log_packet(const AVFormatContext *fmt_ctx, const AVPacket *pkt)
 {
     AVRational *time_base = &fmt_ctx->streams[pkt->stream_index]->time_base;
 
-    printf("pts:%s pts_time:%s 
+    printf("pts:%s pts_time:%s dts:%s dts_time:%s duration:%s duration_time:%s stream_index:%d\n",
+           av_ts2str(pkt->pts), av_ts2timestr(pkt->pts, time_base),
+           av_ts2str(pkt->dts), av_ts2timestr(pkt->dts, time_base),
+           av_ts2str(pkt->duration), av_ts2timestr(pkt->duration, time_base),
+           pkt->stream_index);
+}
+
+static int write_frame(AVFormatContext *fmt_ctx, const AVRational *time_base, AVStream *st, AVPacket *pkt)
+{
+    /* rescale output packet timestamp values from codec to stream timebase */
+    av_packet_rescale_ts(pkt, *time_base, st->time_base);
+    pkt->stream_index = st->index;
+
+    /* Write the compressed frame to the media file. */
+    log_packet(fmt_ctx, pkt);
+    return av_interleaved_write_frame(fmt_ctx, pkt);
+}
+
+static int open_input_file(const char *src_filename)
+{
+    int ret;
+    unsigned int i;
+
+    ifmt_ctx = NULL;
     if ((ret = avformat_open_input(&ifmt_ctx, src_filename, NULL, NULL)) < 0) {
         av_log(NULL, AV_LOG_ERROR, "Cannot open input file\n");
         return ret;
@@ -201,7 +224,7 @@ static int open_output_file(const char *filename)
             out_stream->time_base = in_stream->time_base;
         }
         // if (ofmt_ctx->oformat->flags & AVFMT_GLOBALHEADER)
-             out_stream->codec->flags |= AV_CODEC_FLAG_GLOBAL_HEADER;
+        out_stream->codec->flags |= AV_CODEC_FLAG_GLOBAL_HEADER;
     }
 
     av_dump_format(ofmt_ctx, 0, filename, 1);
@@ -277,9 +300,9 @@ static int filter_encode_write_frame(AVFrame *frame, unsigned int stream_index)
 int main(int argc, char *argv[])
 {
     const char * src_filename = "rtmp://live.hkstv.hk.lxdns.com/live/hks";
-    /* const char * src_filename = "test.flv"; */
-    const char * dst_filename = "rtmp://localhost/publishlive/livestream";
-    // const char * dst_filename = "demo.flv"; 
+    //const char * src_filename = "test.flv";
+    const char * dst_filename = "rtmp://localhost/publishlive/livestream"; */
+    //const char * dst_filename = "demo.flv";
 
     int frame_count = 0;
 
